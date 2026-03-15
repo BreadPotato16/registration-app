@@ -1,37 +1,47 @@
-import React, { useState, } from 'react';
+import React, { useState } from 'react';
 import axiosClient from '../../services/axiosClient';
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
 
+
+const MySwal = withReactContent(Swal);
 
 function Dashboard() {
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [alertMessage, setAlertMsg] = useState('');
-  const [alertType, setAlertType] = useState('success'); 
   const [isLoading, setLoading] = useState(false);
 
   const handleRegister = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setAlertMsg(''); 
     try {
       const response = await axiosClient.post("registration.php", {
         username,
         password,
       });
 
-      if (response.data.status === 'success') {
-        setAlertType('success'); 
-        setAlertMsg(response.data.message);
-      } else {
-        setAlertType('danger'); 
-        setAlertMsg(response.data.message); 
-      }
+
+      const isSuccess = response.data.status === 'success';
+
+      MySwal.fire({
+        title: isSuccess ? 'Registration Successful' : 'Registration Failed',
+        text: response.data.message,
+        icon: isSuccess ? 'success' : 'error',
+        confirmButtonText: 'OK'
+      }).then((result) => {
+        if (result.isConfirmed && isSuccess) {
+          window.location.reload();
+        }
+      });
 
     } catch (error) {
       console.error('Error during registration:', error);
-      setAlertType('danger'); 
-      setAlertMsg('Something went wrong. Please try again.'); 
+      MySwal.fire({
+        title: 'Unexpected Error',
+        text: 'Something went wrong. Please try again.',
+        icon: 'error',
+      });
     } finally {
       setLoading(false);
     }
@@ -76,9 +86,6 @@ function Dashboard() {
 
               </div>
             </div>
-
-            {alertMessage && <div className={`alert alert-${alertType} mt-3`} role="alert">{alertMessage}</div>}
-
 
           </div>
           <div className="col"></div>
